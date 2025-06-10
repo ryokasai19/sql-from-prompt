@@ -1,16 +1,29 @@
 import os
 import sqlite3
 import tempfile
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, render_template
 import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Now you can access your variables
+database_url = os.getenv('DATABASE_URL')
+api_key = os.getenv('API_KEY')
+debug_mode = os.getenv('DEBUG', 'False').lower() == 'true'
+secret_key = os.getenv('SECRET_KEY')
+
+print(f"Database URL: {database_url}")
+print(f"Debug mode: {debug_mode}")
 
 app = Flask(__name__)
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=GOOGLE_API_KEY)
 MODEL_NAME = "models/gemini-1.5-flash"
 
-# Store training examples in-memory
-training_examples = []
+# Store semantic explanations in-memory
+semantic_explanations = []
 
 @app.route("/")
 def index():
@@ -31,17 +44,21 @@ def handle_query():
     schema = extract_schema(db_path)
     print("DEBUG - extracted schema:\n", schema)
 
-    # Build few-shot prompt
-    few_shot_prompt = ""
-    for q, s in training_examples:
-        few_shot_prompt += f"Q: {q}\nA:\n{s}\n\n"
+    # Build context from semantic explanations
+    context = ""
+    for explanation in semantic_explanations:
+        context += f"{explanation}\n\n"
+    
     full_prompt = f"""Given this SQLite schema:
 
     {schema}
 
-    {few_shot_prompt}Q: {prompt}
-    A:"""
+    Additional context about the data:
+    {context}
 
+    Convert this question to SQL:
+    {prompt}
+    SQL:"""
 
     model = genai.GenerativeModel(MODEL_NAME)
     print("DEBUG - full prompt sent to Gemini:\n", full_prompt)
@@ -68,15 +85,13 @@ def handle_query():
         return jsonify({"sql": raw_sql, "result": [], "error": error})
     return jsonify({"sql": raw_sql, "result": result})
 
-
 @app.route("/train", methods=["POST"])
 def train_example():
-    question = request.form.get("question")
-    sql = request.form.get("sql")
-    if not question or not sql:
-        return jsonify({"error": "Missing training question or SQL"}), 400
-    training_examples.append((question, sql))
-    return jsonify({"message": "Training example added"})
+    explanation = request.form.get("explanation")
+    if not explanation:
+        return jsonify({"error": "Missing explanation"}), 400
+    semantic_explanations.append(explanation)
+    return jsonify({"message": "Explanation added"})
 
 def extract_schema(db_path):
     conn = sqlite3.connect(db_path)
@@ -85,7 +100,6 @@ def extract_schema(db_path):
     tables = cursor.fetchall()
     print("DEBUG - tables found:", tables)
         
-    
     schema = ""
     for table_name in tables:
         table = table_name[0]
@@ -107,31 +121,34 @@ def execute_sql(db_path, query):
         columns = [description[0] for description in cursor.description]
         return [dict(zip(columns, row)) for row in rows]
     finally:
-        conn.close()  # Ensure connection is fully closed before deleting file
-
+        conn.close()
 
 @app.route("/examples", methods=["GET"])
 def view_examples():
-    return render_template("examples.html", examples=training_examples)
+    return render_template("examples.html", examples=semantic_explanations)
 
 @app.route("/delete-example", methods=["POST"])
 def delete_example():
     index = int(request.form.get("index"))
-    if 0 <= index < len(training_examples):
-        training_examples.pop(index)
+    if 0 <= index < len(semantic_explanations):
+        semantic_explanations.pop(index)
     return jsonify({"success": True})
 
 @app.route("/training-data", methods=["GET"])
 def get_training_data():
-    return jsonify(training_examples)
+    return jsonify(semantic_explanations)
 
 @app.route("/delete-training/<int:index>", methods=["DELETE"])
 def delete_training(index):
-    if 0 <= index < len(training_examples):
-        training_examples.pop(index)
+    if 0 <= index < len(semantic_explanations):
+        semantic_explanations.pop(index)
         return jsonify({"success": True})
     return jsonify({"error": "Invalid index"}), 400
 
+@app.route("/clear-all-training", methods=["DELETE"])
+def clear_all_training():
+    semantic_explanations.clear()
+    return jsonify({"success": True})
 
 if __name__ == "__main__":
     app.run(debug=True)

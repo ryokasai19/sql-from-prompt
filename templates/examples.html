@@ -1,26 +1,67 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Training Examples</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    code {
+      background: #f0f0f0;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    button {
+      background: #ff4444;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #cc0000;
+    }
+  </style>
 </head>
+
 <body>
   <h1>Stored Training Examples</h1>
 
   {% if examples %}
-    <ul>
-      {% for q, s in examples %}
-        <li>
-          <strong>Q:</strong> {{ q }}<br>
-          <strong>SQL:</strong> {{ s }}<br>
-          <form method="post" action="/delete-example" onsubmit="return deleteExample(event, {{ loop.index0 }})">
-            <button type="submit">Delete</button>
-          </form>
-        </li>
-        <hr>
-      {% endfor %}
-    </ul>
+  <ul>
+    {% for statement, sql in examples %}
+    <li>
+      <strong>Statement:</strong> {{ statement }}<br>
+      <strong>SQL:</strong> <code>{{ sql }}</code><br>
+      <form method="post" action="/delete-example" onsubmit="return deleteExample(event, '{{ loop.index0 }}')">
+        <button type="submit">Delete</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
   {% else %}
-    <p>No training examples stored.</p>
+  <p>No training examples stored.</p>
   {% endif %}
 
   <script>
@@ -37,4 +78,5 @@
     }
   </script>
 </body>
+
 </html>
