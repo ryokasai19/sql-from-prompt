@@ -2,8 +2,7 @@
 
 This is a simple web app that lets you:
 
-- Upload a **SQLite database**
-- Might try to be adaptable to other databases
+- Upload a **SQLite database** <- might try to be adaptable to other databases
 - Ask **natural language questions** about your data
 - Automatically generate SQL queries using **Gemini Pro**
 - View the SQL query and the results in a table
