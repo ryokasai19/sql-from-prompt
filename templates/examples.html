@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Training Examples</title>
+</head>
+<body>
+  <h1>Stored Training Examples</h1>
+
+  {% if examples %}
+    <ul>
+      {% for q, s in examples %}
+        <li>
+          <strong>Q:</strong> {{ q }}<br>
+          <strong>SQL:</strong> {{ s }}<br>
+          <form method="post" action="/delete-example" onsubmit="return deleteExample(event, {{ loop.index0 }})">
+            <button type="submit">Delete</button>
+          </form>
+        </li>
+        <hr>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No training examples stored.</p>
+  {% endif %}
+
+  <script>
+    async function deleteExample(event, index) {
+      event.preventDefault();
+      const res = await fetch("/delete-example", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `index=${index}`
+      });
+      if (res.ok) {
+        location.reload();
+      }
+    }
+  </script>
+</body>
+</html>

@@ -8,19 +8,67 @@
     font-family: sans-serif;
     background-color: #f9f9f9;
     margin: 0;
-    padding: 2rem;
+    padding: 0;
     display: flex;
     justify-content: center;
   }
 
+  .layout {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 10rem;
+  gap: 10rem;
+  width: 100%;
+  justify-content: center;
+  box-sizing: border-box; 
+}
+
+  .main {
+    flex: 2;
+  }
+
+
   .container {
-    max-width: 800px;
+    max-width: 1200px;
     width: 100%;
     background: white;
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   }
+.train_card {
+  display: flex;
+  width:100%;
+  gap: 2rem;
+  padding: 2rem;
+  margin-top: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  align-items: flex-start;
+  
+}
+
+.train-form-section,
+.train-list-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.train-list-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.train-list-section li {
+  background: #f9f9f9;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
 
   h1, h2 {
     text-align: center;
@@ -66,7 +114,9 @@
 
 </head>
 <body>
-    <div class="container">
+  <div class="layout">
+    <div class="main">
+      <div class="container">
         <h1>Ask Your Data</h1>
 
         <form id="query-form">
@@ -87,57 +137,133 @@
 
         <h2>Results</h2>
         <div id="results">(waiting...)</div>
+      </div>
+      <div class = "train_card">
+        <!-- Left: Train the Model form -->
+        <div class="train-form-section">      
+          <h2>Train the Model</h2>
+          <form id="train-form">
+            <label for="train-question">Example Question:</label>
+            <input type="text" id="train-question" name="question" required><br><br>
 
-        <script>
-            document.getElementById('query-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+            <label for="train-sql">Example SQL:</label>
+            <textarea id="train-sql" name="sql" rows="4" cols="50" required></textarea><br><br>
 
-            const formData = new FormData();
-            const promptText = document.getElementById('prompt').value;
-            formData.append('db', document.getElementById('db').files[0]);
-            formData.append('prompt', promptText);
+            <button type="submit">Submit Training Data</button>
+          </form>
+        
 
-            const res = await fetch('/query', {
+          <script>
+            document.getElementById('train-form').addEventListener('submit', async (e) => {
+              e.preventDefault();
+
+              const formData = new FormData();
+              formData.append('question', document.getElementById('train-question').value);
+              formData.append('sql', document.getElementById('train-sql').value);
+
+              const res = await fetch('/train', {
                 method: 'POST',
                 body: formData
+              });
+
+              if (res.ok) {
+                document.getElementById('train-question').value = '';
+                document.getElementById('train-sql').value = '';
+                refreshTrainingData(); // 🔄 Immediately reload list
+              } else {
+                alert("Failed to add training data.");
+              }
             });
+              document.getElementById('query-form').addEventListener('submit', async (e) => {
+              e.preventDefault();
 
-            const data = await res.json();
+              const formData = new FormData();
+              const promptText = document.getElementById('prompt').value;
+              formData.append('db', document.getElementById('db').files[0]);
+              formData.append('prompt', promptText);
 
-            document.getElementById('question-box').textContent = promptText;
-            document.getElementById('sql-box').textContent = data.sql || '(no SQL)';
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '';
+              const res = await fetch('/query', {
+                  method: 'POST',
+                  body: formData
+              });
 
-            if (data.result && data.result.length) {
-                const table = document.createElement('table');
-                const header = document.createElement('tr');
-                Object.keys(data.result[0]).forEach(key => {
-                const th = document.createElement('th');
-                th.textContent = key;
-                header.appendChild(th);
-                });
-                table.appendChild(header);
+              const data = await res.json();
 
-                data.result.forEach(row => {
-                const tr = document.createElement('tr');
-                Object.values(row).forEach(value => {
-                    const td = document.createElement('td');
-                    td.textContent = value;
-                    tr.appendChild(td);
-                });
-                table.appendChild(tr);
-                });
+              document.getElementById('question-box').textContent = promptText;
+              document.getElementById('sql-box').textContent = data.sql || '(no SQL)';
+              const resultsDiv = document.getElementById('results');
+              resultsDiv.innerHTML = '';
 
-                resultsDiv.appendChild(table);
-            } else {
-                resultsDiv.textContent = 'No results.';
-            }
+              if (data.result && data.result.length) {
+                  const table = document.createElement('table');
+                  const header = document.createElement('tr');
+                  Object.keys(data.result[0]).forEach(key => {
+                  const th = document.createElement('th');
+                  th.textContent = key;
+                  header.appendChild(th);
+                  });
+                  table.appendChild(header);
 
-            // ✅ Clear prompt field after submit
-            document.getElementById('prompt').value = '';
-            });
-        </script>
+                  data.result.forEach(row => {
+                  const tr = document.createElement('tr');
+                  Object.values(row).forEach(value => {
+                      const td = document.createElement('td');
+                      td.textContent = value;
+                      tr.appendChild(td);
+                  });
+                  table.appendChild(tr);
+                  });
+
+                  resultsDiv.appendChild(table);
+              } else {
+                  resultsDiv.textContent = 'No results.';
+              }
+
+              // ✅ Clear prompt field after submit
+              document.getElementById('prompt').value = '';
+              });
+          </script>
+        </div>
+
+        <!-- Right: Training History -->
+        <div class="train-list-section"> 
+      
+          <h2>Training History</h2>
+          <ul id="training-list"></ul>
+
+          <button onclick="refreshTrainingData()">Refresh Training Data</button>
+        </div>
+      </div>
     </div>
+  </div>
+<script>
+function refreshTrainingData() {
+  fetch('/training-data')
+    .then(res => res.json())
+    .then(data => {
+      const list = document.getElementById("training-list");
+      list.innerHTML = '';
+      data.forEach((item, idx) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <div style="margin-bottom: 0.5rem;">
+            <strong>Q:</strong> ${item[0]}<br>
+            <strong>A:</strong> <code>${item[1]}</code>
+          </div>
+        `;
+
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "delete ❌";
+        delBtn.onclick = () => {
+          fetch(`/delete-training/${idx}`, { method: "DELETE" })
+            .then(() => refreshTrainingData());
+        };
+
+        li.appendChild(delBtn);
+        list.appendChild(li);
+      });
+    });
+}
+</script>
 </body>
 </html>
