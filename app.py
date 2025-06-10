@@ -6,8 +6,9 @@ import tempfile
 from flask import Flask, request, jsonify, send_from_directory
 import google.generativeai as genai
 
-app = Flask(__name__)
-genai.configure(api_key="AIzaSyDAN1sc1ApAOw6QVoJIUkaraz5Zpu6dJ4Q")  # ⬅️ Replace with your actual Gemini API key
+    app = Flask(__name__)
+    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+    genai.configure(api_key=GOOGLE_API_KEY)
 
 MODEL_NAME = "models/gemini-1.5-flash"  # You can swap this to other models as needed
 
