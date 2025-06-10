@@ -1,21 +1,18 @@
-
-
 import os
 import sqlite3
 import tempfile
 from flask import Flask, request, jsonify, send_from_directory
 import google.generativeai as genai
 
-    app = Flask(__name__)
-    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-    genai.configure(api_key=GOOGLE_API_KEY)
+app = Flask(__name__)
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+genai.configure(api_key=GOOGLE_API_KEY)
 
 MODEL_NAME = "models/gemini-1.5-flash"  # You can swap this to other models as needed
 
 @app.route("/")
 def index():
     return send_from_directory(".", "index.html")
-
 
 @app.route("/query", methods=["POST"])
 def handle_query():
@@ -55,7 +52,6 @@ def handle_query():
     os.remove(db_path)
     return jsonify({"sql": raw_sql, "result": result})
 
-
 def extract_schema(db_path):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -75,7 +71,6 @@ def extract_schema(db_path):
     conn.close()
     return schema
 
-
 def execute_sql(db_path, query):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -85,7 +80,6 @@ def execute_sql(db_path, query):
     conn.close()
 
     return [dict(zip(columns, row)) for row in rows]
-
 
 if __name__ == "__main__":
     app.run(debug=True)
