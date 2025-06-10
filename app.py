@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import tempfile
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, render_template
 import google.generativeai as genai
 
 app = Flask(__name__)
@@ -12,7 +12,7 @@ MODEL_NAME = "models/gemini-1.5-flash"  # You can swap this to other models as n
 
 @app.route("/")
 def index():
-    return send_from_directory(".", "index.html")
+    return render_template("index.html")
 
 @app.route("/query", methods=["POST"])
 def handle_query():
