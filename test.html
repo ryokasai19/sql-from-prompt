@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SQL from Prompt</title>
+</head>
+<body>
+  <h2>Ask a Question from Your Database</h2>
+  <form action="http://127.0.0.1:5000/query" method="post" enctype="multipart/form-data">
+    <label for="database">Upload SQLite Database (.sqlite):</label><br>
+    <input type="file" name="database" accept=".sqlite"><br><br>
+
+    <label for="question">Your question:</label><br>
+    <input type="text" name="question" size="50"><br><br>
+
+    <input type="submit" value="Submit">
+  </form>
+</body>
+</html>
